@@ -1,6 +1,5 @@
 <?php
 //error_reporting(0);
-include_once 'Pinyin.php';
 
 $words=$_POST['words']??'';//笔顺字
 
@@ -12,10 +11,7 @@ if($_POST['bgcolor']!='black'){
 }
 
 $z_color=$_POST['zcolor']??'black';//主字体颜色
-$f_color=$_POST['fcolor']??'5';//辅字体颜色
 $title=$_POST['title']??'';//辅字体颜色
-$bs=$_POST['bs']??'0';//笔顺填充
-$py=$_POST['py']??'0';//拼音
 
 /*过滤掉非中文*/
 preg_match_all('/[\x{4e00}-\x{9fff}]+/u', $words, $words);
@@ -63,37 +59,39 @@ $fz_color=[
 
 $color=$color[$z_color];//显示主颜色
 
-$fcolor=$fz_color[$z_color.$f_color];//辅助颜色
+?>
 
-if($f_color=='10'){
-	$fcolor=$fz_color['10'];
-}
-?><!doctype html>
+
+<!doctype html>
 <html>
 <head>
 <meta charset="utf-8">
-<title>田字格字帖生成器</title>
+<title>减笔猜词生成器</title>
 <style>
 body,div,p,ul,li{ padding:0; margin:0; list-style:none;}
 div{ width:938px; margin:0 auto;padding-left:2px; }
-li{display: inline-block; width:80px; height:80px; font-family:"楷体","楷体_gb2312", "Kaiti SC", STKaiti, "AR PL UKai CN", "AR PL UKai HK", "AR PL UKai TW", "AR PL UKai TW MBE", "AR PL KaitiM GB", KaiTi, KaiTi_GB2312, DFKai-SB, "TW\-Kai"; font-size:58px; text-align:center; line-height:85px; background:url(img/<?=$bglx;?>.svg); margin:5px 0px 5px -2px; color:#b8b8b8; }
+li{display: inline-block; width:80px; height:80px; font-family:"楷体","楷体_gb2312", "Kaiti SC", STKaiti, "AR PL UKai CN", "AR PL UKai HK", "AR PL UKai TW", "AR PL UKai TW MBE", "AR PL KaitiM GB", KaiTi, KaiTi_GB2312, DFKai-SB, "TW\-Kai"; font-size:58px; text-align:center; line-height:85px; margin:5px 0px 5px -2px; color:#b8b8b8; }
 li.f{color:#000;margin-left:-0px}
-li.svg{line-height:84px;}
+li.svg{line-height:84px; background:url(img/<?=$bglx;?>.svg);}
+li.svg-empty{line-height:84px;}
 li svg{ magin:8px; vertical-align:middle;}
+li svg.stroke{ background-color:#00AE72;}
 .afterpage{ page-break-before:always;}
 .afterpage{ page-break-before:always;}
 .page-head{height: 116px;line-height: 136px; font-size: 32px;text-align: center;display: none;color: #666666}
 @media print{.afterpage{ page-break-before:always;}.page-head{display: block;}}
 @page {size: auto;margin: 5mm 16mm 5mm 16mm;}
+div.btn{ text-align:center; height:60px; line-height:50px; }
+div.btn input{ width:88px; height:33px; font-size:18px;}
 </style>
 </head>
 <body>
 <div>
 <ul>
+
+<div id="prompt"><h3>拆字结果——点击笔画删除</h3></div>
+
 <?php
-
-
-
 preg_match_all("/./u",$words,$hz);
 
 for($ihz=0;$ihz<count($hz['0']);$ihz++){
@@ -110,41 +108,96 @@ for($ihz=0;$ihz<count($hz['0']);$ihz++){
 	$count=count($data['strokes']);//统计共有多少画
 
 
-	/*显示完整字符和拼音*/
-	
-	if($py)
-	{
-		//print_r($hz['0'][$ihz]);
-		$py_str=Pinyin::getPinyin($hz['0'][$ihz]);
-		echo '<li class="svg" style="positon: relative;"><span style="font:13px bolder;display:block;position:absolute;width:80px;color:rgb('.$color.')">'.$py_str.'</span><svg width="54" height="54" style="margin-top: -11px;"><g transform="translate(-2.9,48) scale(0.058, -0.0572)">';
+	/*显示完整字符*/
+	echo '<li class="svg"><svg width="54" height="54" style="margin-top: -11px;"><g transform="translate(-2.9,48) scale(0.058, -0.0572)">';
+
+	for($i=0;$i<$count;$i++){
+
+		echo '<path id="stroke-fixed-'.$ihz.'-'.$i.'" d="'.$data['strokes'][$i].'" style="fill:rgb('.$color.');stroke:rgb('.$color.');" stroke-width = "0"></path>';
 	}
-	else
-	{
-		echo '<li class="svg"><svg width="54" height="54" style="margin-top: -11px;"><g transform="translate(-2.9,48) scale(0.058, -0.0572)">';
-	}
-	
-	foreach ($data['strokes'] as $v){
-		echo '<path d="'.$v.'"style="fill:rgb('.$color.');stroke:rgb('.$color.');" stroke-width = "0"></path>';
+
+	echo "</g></svg></li>";
+
+	/*显示不完整字符*/
+	echo '<li class="svg"><svg width="54" height="54" style="margin-top: -11px;"><g transform="translate(-2.9,48) scale(0.058, -0.0572)">';
+
+	for($i=0;$i<$count;$i++){
+
+		echo '<path id="stroke-change-'.$ihz.'-'.$i.'" d="'.$data['strokes'][$i].'" style="fill:rgb('.$color.');stroke:rgb('.$color.');" stroke-width = "0"></path>';
 	}
 
 	echo "</g></svg></li>";
 
 
-	//按笔数显示
+	//显示笔顺
 	for($i=0;$i<$count;$i++){
 		
-		echo '<li class="svg"><svg width="54" height="54" style="margin-top: -11px;"><g transform="translate(-2.9,48) scale(0.058, -0.0572)">';
-		
-		for($ii=0;$ii<=$i;$ii++){
-			echo '<path d="'.$data['strokes'][$ii].'"style="fill:rgb('.$fcolor.');stroke:rgb('.$fcolor.');" stroke-width = "0"></path>';
-		}
-		
+		echo '<li class="svg"><svg class="stroke" id="stroke-'.$ihz.'-'.$i.'" width="54" height="54" style="margin-top: -11px;"><g transform="translate(-2.9,48) scale(0.058, -0.0572)">';
+
+		echo '<path d="'.$data['strokes'][$i].'" style="fill:rgb('.$color.');stroke:rgb('.$color.');" stroke-width = "0"></path>';
 
 		echo '</g></svg></li>';
 
 	}
 	
 	
+	/*判断是否填充12个田字格*/
+	$tzg12=($count+2)/12;
+	$kg=0;//空格，每行剩余未填充的空格
+	if(!is_int($tzg12)){
+		$kg=12- (12* $tzg12);
+	}
+	//为负数
+	if($kg<0){
+		$kg= ((ceil(abs($kg)/12)+1)*12)-($count+2);
+	}
+	
+	/*格数不够，填充*/
+	//填充空格
+	if($kg){
+		for($i=0;$i<$kg;$i++){
+			echo '<li class="svg-empty">&nbsp;</li>';
+		}
+		
+	}
+
+}
+
+?>
+
+
+</ul>
+</div>
+
+<div id="prompt"><h3>最终结果</h3></div>
+
+<div>
+<ul>
+
+<?php
+
+for($ihz=0;$ihz<count($hz['0']);$ihz++){
+
+	$hzGBK=iconv('UTF-8', 'GB2312' ,$hz['0'][$ihz]); 
+
+	if(file_exists("bishun_data/".$hzGBK.".json")){
+		$data=file_get_contents("bishun_data/".$hzGBK.".json");
+	}else{
+		$data=file_get_contents("bishun_data/".$hz['0'][$ihz].".json");
+	}
+
+	$data=json_decode($data,1);
+	$count=count($data['strokes']);//统计共有多少画
+
+	/*显示完整字符*/
+	echo '<li class="svg"><svg width="54" height="54" style="margin-top: -11px;"><g transform="translate(-2.9,48) scale(0.058, -0.0572)">';
+
+	for($i=0;$i<$count;$i++){
+		echo '<path id="stroke-final-'.$ihz.'-'.$i.'" d="'.$data['strokes'][$i].'" style="fill:rgb('.$color.');stroke:rgb('.$color.');" stroke-width = "0"></path>';
+	}
+
+	echo "</g></svg></li>";
+
 	/*判断是否填充12个田字格*/
 	$tzg12=($count+1)/12;
 	$kg=0;//空格，每行剩余未填充的空格
@@ -155,64 +208,65 @@ for($ihz=0;$ihz<count($hz['0']);$ihz++){
 	if($kg<0){
 		$kg= ((ceil(abs($kg)/12)+1)*12)-($count+1);
 	}
-	
-	/*行数不够，填充*/
-	//填充完整字符
-	if($kg and $bs){
-		for($i=0;$i<$kg;$i++){
-			/*显示完整字符*/
-		 echo '<li class="svg"><svg width="54" height="54" style="margin-top: -11px;"><g transform="translate(-2.9,48) scale(0.058, -0.0572)">';
-	
-	     foreach ($data['strokes'] as $v){
-		    echo '<path d="'.$v.'"style="fill:rgb('.$fcolor.');stroke:rgb('.$fcolor.');" stroke-width = "0"></path>';
-	     }
-		 echo "</g></svg></li>";
-
-		}
-	}
-	//填充空行
-	if($kg and !$bs){
-		for($i=0;$i<$kg;$i++){
-			echo '<li class="svg">&nbsp;</li>';
-		}
-		
-	}
-
-	/*分页显示标题头部*/
-	
-	$tzg_hs[]= ceil($tzg12);//占用行数
-	$arraytzg=intval(array_sum($tzg_hs));
-	$arraytzg=$arraytzg/15;
-	if(is_int($arraytzg)){
-		echo "</ul></div><div class='afterpage'><ul>";
-	}
-
 }
 
-//堆满整页
-$tzg_hs=array_sum($tzg_hs);//田字格使用行数
-$tzgzys=ceil($tzg_hs/15);//田字格总页数
-$zhengye=($tzgzys*15-$tzg_hs)*12;
-
-	for($i=0;$i<$zhengye;$i++){
-		echo "<li>&nbsp;</li>";
-	}
-
 ?>
+
+
 </ul>
 </div>
-<div style="display: none;">
 
-</div>
-<div id="page-head-box" style="display: none;">
-<div class="page-head"><?=$title;?></div>
-</div>
+<form action="index.php" method="post">
+	<?php
+	echo '<div style="display: none;"><textarea name="words1">'.$words.'</textarea></div>';
+	?>
+	<div class="btn"><input type="submit" value="返回" ></div>
+</form>
+
 
 <script src="https://ajax.aspnetcdn.com/ajax/jquery/jquery-2.1.1.min.js"></script>
-<script type="text/javascript">
-    $('body').prepend($('#page-head-box').html());
-    $('.afterpage').prepend($('#page-head-box').html());
-    window.onload = function(){
-        setTimeout(function(){window.print(); }, 1000);
-    }
-</script>
+
+<?php
+echo '<script type="text/javascript">';
+for($ihz=0;$ihz<count($hz['0']);$ihz++){
+	
+	$hzGBK=iconv('UTF-8', 'GB2312' ,$hz['0'][$ihz]); 
+
+	if(file_exists("bishun_data/".$hzGBK.".json")){
+		$data=file_get_contents("bishun_data/".$hzGBK.".json");
+	}else{
+		$data=file_get_contents("bishun_data/".$hz['0'][$ihz].".json");
+	}
+
+	$data=json_decode($data,1);
+	$count=count($data['strokes']);//统计共有多少画
+
+	for($i=0;$i<$count;$i++){
+		echo '
+		  $("#stroke-'.$ihz.'-'.$i.'").click(function() {
+				var opacity = $("#stroke-change-'.$ihz.'-'.$i.'").css("fill-opacity");
+				if(opacity == 1){
+					$("#stroke-change-'.$ihz.'-'.$i.'").css("fill-opacity", 0);
+					$("#stroke-final-'.$ihz.'-'.$i.'").css("fill-opacity", 0);
+
+					$("#stroke-change-'.$ihz.'-'.$i.'").css("stroke-opacity", 0);
+					$("#stroke-final-'.$ihz.'-'.$i.'").css("stroke-opacity", 0);
+
+					$("#stroke-'.$ihz.'-'.$i.'").css("background-color", "#EE7C6B");
+	            }else{
+					$("#stroke-change-'.$ihz.'-'.$i.'").css("fill-opacity", 1);
+					$("#stroke-final-'.$ihz.'-'.$i.'").css("fill-opacity", 1);
+
+					$("#stroke-change-'.$ihz.'-'.$i.'").css("stroke-opacity", 1);
+					$("#stroke-final-'.$ihz.'-'.$i.'").css("stroke-opacity", 1);
+
+					$("#stroke-'.$ihz.'-'.$i.'").css("background-color", "#00AE72");
+				}
+  			});
+		
+		';
+
+	}
+}
+echo '</script>';
+?> 
